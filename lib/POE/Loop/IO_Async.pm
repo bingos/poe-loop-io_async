@@ -124,6 +124,7 @@ sub loop_resume_filehandle {
 
 sub loop_resume_time_watcher {
   my ($self, $next_time) = @_;
+  return unless $next_time;
   $_watcher_timer = $loop->enqueue_timer( time => $next_time, code => \&_loop_event_callback);
 }
 
