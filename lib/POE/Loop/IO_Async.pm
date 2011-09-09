@@ -174,4 +174,14 @@ sub _loop_event_callback {
   # Return false to stop.
   return 0;
 }
+
 1;
+
+=for poe_tests
+
+sub skip_tests {
+  $ENV{POE_EVENT_LOOP} = "POE::Loop::IO_Async";
+  return;
+}
+
+=cut
