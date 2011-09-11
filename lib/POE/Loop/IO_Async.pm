@@ -1,16 +1,15 @@
 package POE::Loop::IO_Async;
 
+#ABSTRACT: IO::Async event loop support for POE
+
 use strict;
 use warnings;
 
 use POE::Loop::PerlSignals;
 
-use vars qw[$VERSION];
-
-$VERSION = '0.002';
-
 # Everything plugs into POE::Kernel.
-package POE::Kernel;
+package # Hide from Pause
+  POE::Kernel;
 
 use strict;
 use warnings;
@@ -130,13 +129,14 @@ sub loop_resume_time_watcher {
 
 sub loop_reset_time_watcher {
   my ($self, $next_time) = @_;
-  $loop->cancel_timer($_watcher_timer);
+  $loop->cancel_timer($_watcher_timer) if $_watcher_timer;
   undef $_watcher_timer;
   $self->loop_resume_time_watcher($next_time);
 }
 
 sub _loop_resume_timer {
-  $loop->unwatch_idle($_watcher_timer);
+  $loop->unwatch_idle($_watcher_timer) if $_watcher_timer;
+  undef $_watcher_timer;
   $poe_kernel->loop_resume_time_watcher($poe_kernel->get_next_event_time());
 }
 
@@ -145,8 +145,6 @@ sub loop_pause_time_watcher {
 }
 
 # Event callback to dispatch pending events.
-
-my $last_time = time();
 
 sub _loop_event_callback {
   my $self = $poe_kernel;
@@ -162,19 +160,38 @@ sub _loop_event_callback {
     $_watcher_timer = $loop->watch_idle( when => 'later', code => \&_loop_resume_timer );
   }
 
-  $last_time = time() if TRACE_STATISTICS;
-
   # Return false to stop.
   return 0;
 }
 
 1;
 
-=for poe_tests
+=begin poe_tests
 
 sub skip_tests {
   $ENV{POE_EVENT_LOOP} = "POE::Loop::IO_Async";
   return;
 }
+
+=end poe_tests
+
+=pod
+
+=head1 SYNOPSIS
+
+See L<POE::Loop>.
+
+=head1 DESCRIPTION
+
+POE::Loop::IO_Async implements the interface documented in POE::Loop.
+Therefore it has no documentation of its own. Please see POE::Loop for more details.
+
+=head1 SEE ALSO
+
+L<POE>
+
+L<POE::Loop>
+
+L<IO::Async>
 
 =cut
