@@ -17,6 +17,7 @@ use IO::Async::Loop;
 
 my $loop;
 my $_watcher_timer;
+my $_idle_timer;
 my %signal_watcher;
 
 sub loop_initialize {
@@ -135,8 +136,8 @@ sub loop_reset_time_watcher {
 }
 
 sub _loop_resume_timer {
-  $loop->unwatch_idle($_watcher_timer) if $_watcher_timer;
-  undef $_watcher_timer;
+  $loop->unwatch_idle($_idle_timer) if $_idle_timer;
+  undef $_idle_timer;
   $poe_kernel->loop_resume_time_watcher($poe_kernel->get_next_event_time());
 }
 
@@ -152,12 +153,11 @@ sub _loop_event_callback {
   $self->_data_ev_dispatch_due();
   $self->_test_if_kernel_is_idle();
 
-  $loop->cancel_timer($_watcher_timer);
   undef $_watcher_timer;
 
   # Register the next timeout if there are events left.
   if ($self->get_event_count()) {
-    $_watcher_timer = $loop->watch_idle( when => 'later', code => \&_loop_resume_timer );
+    $_idle_timer = $loop->watch_idle( when => 'later', code => \&_loop_resume_timer );
   }
 
   # Return false to stop.
